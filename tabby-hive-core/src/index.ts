@@ -2,7 +2,7 @@ import { NgModule, Injector } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 
-import TabbyCorePlugin, { ConfigProvider, ConfigService, HotkeyProvider, HotkeysService, SelectorService, SelectorOption, NotificationsService } from 'tabby-core'
+import TabbyCorePlugin, { ConfigProvider, HotkeyProvider, HotkeysService, SelectorService, SelectorOption, NotificationsService } from 'tabby-core'
 
 import { HiveConfigProvider } from './config'
 import { HiveConfigService } from './services/hiveConfig.service'
@@ -49,11 +49,7 @@ export default class HiveCoreModule {
     private constructor (
         private injector: Injector,
         hotkeys: HotkeysService,
-        config: ConfigService,
     ) {
-        // Disable tab recovery — no more "History restored" spam
-        config.store.recoverTabs = false
-
         // Retry until Angular is fully bootstrapped
         const tryBootstrap = (attempts = 0): void => {
             setTimeout(() => {
