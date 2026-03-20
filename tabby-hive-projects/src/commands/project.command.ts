@@ -123,6 +123,7 @@ export class ProjectCommand extends HiveSlashCommand {
             return { output: `\x1b[31mNo local folder found for ${project.name}\x1b[0m` }
         }
 
+        const shell = process.env.SHELL || '/bin/zsh'
         const app = this.injector.get(AppService)
         app.openNewTab({
             type: TerminalTabComponent,
@@ -133,8 +134,8 @@ export class ProjectCommand extends HiveSlashCommand {
                     name: project.display_name || project.name,
                     options: {
                         cwd: dir,
-                        command: '',
-                        args: [] as string[],
+                        command: shell,
+                        args: ['--login'] as string[],
                         env: { HIVE_PROJECT: project.name },
                     },
                 },
@@ -149,18 +150,19 @@ export class ProjectCommand extends HiveSlashCommand {
             return { output: `\x1b[31mNo local folder found for ${project.name}\x1b[0m` }
         }
 
-        // Build context and write to temp file
+        // Build context prompt for Claude's initial message
         let contextPrompt = ''
         try {
             contextPrompt = this.buildContextPrompt(project)
         } catch { /* proceed without */ }
 
-        const app = this.injector.get(AppService)
-        const claudeArgs: string[] = ['--dangerously-skip-permissions']
-        if (contextPrompt) {
-            claudeArgs.push('-p', contextPrompt)
-        }
+        // Use shell to launch claude interactively so the PTY works properly
+        const shell = process.env.SHELL || '/bin/zsh'
+        const claudeCmd = contextPrompt
+            ? `claude --dangerously-skip-permissions --initial-prompt ${this.shellEscape(contextPrompt)}`
+            : 'claude --dangerously-skip-permissions'
 
+        const app = this.injector.get(AppService)
         app.openNewTab({
             type: TerminalTabComponent,
             inputs: {
@@ -170,8 +172,8 @@ export class ProjectCommand extends HiveSlashCommand {
                     name: `Claude (${project.display_name || project.name})`,
                     options: {
                         cwd: dir,
-                        command: 'claude',
-                        args: claudeArgs,
+                        command: shell,
+                        args: ['-l', '-c', claudeCmd] as string[],
                         env: { HIVE_PROJECT: project.name },
                     },
                 },
@@ -200,6 +202,10 @@ export class ProjectCommand extends HiveSlashCommand {
             parts.push(`Tags: ${project.tags.join(', ')}`)
         }
         return parts.join('. ')
+    }
+
+    private shellEscape (s: string): string {
+        return "'" + s.replace(/'/g, "'\\''") + "'"
     }
 
     private async showInfo (projectName: string | null): Promise<CommandResult> {
