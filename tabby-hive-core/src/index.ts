@@ -73,11 +73,14 @@ export default class HiveCoreModule {
         }
         tryBootstrap()
 
-        hotkeys.hotkey$.subscribe(hotkey => {
-            if (hotkey === 'hive-command-palette') {
+        // Direct Cmd+K / Ctrl+K listener (bypasses Tabby hotkey config issues)
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault()
+                e.stopPropagation()
                 this.openCommandPalette()
             }
-        })
+        }, true)
     }
 
     private async openCommandPalette (): Promise<void> {
