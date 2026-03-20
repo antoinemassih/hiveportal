@@ -1,0 +1,22 @@
+app: hiveportal
+domain: hiveportal
+
+services:
+  web:
+    dockerfile: Dockerfile.web
+    port: 9222
+    routes:
+      - path: /
+    health: /
+    env:
+      NODE_ENV: production
+
+infrastructure:
+  postgresql:
+    type: ExternalName
+    host: 192.168.1.143
+    port: 5432
+  redis:
+    type: ExternalName
+    host: 192.168.1.89
+    port: 6379

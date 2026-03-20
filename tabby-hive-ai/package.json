@@ -1,0 +1,33 @@
+{
+  "name": "tabby-hive-ai",
+  "version": "1.0.0",
+  "description": "HivePortal AI integration: Claude CLI, LobsterClaws sessions, WhisperAnchor search",
+  "keywords": [
+    "tabby-builtin-plugin"
+  ],
+  "main": "dist/index.js",
+  "typings": "typings/index.d.ts",
+  "scripts": {
+    "build": "webpack --progress --color --display-modules",
+    "watch": "webpack --progress --color --watch"
+  },
+  "files": [
+    "dist",
+    "typings"
+  ],
+  "author": "Antoine Abdul-Massih",
+  "license": "MIT",
+  "devDependencies": {},
+  "peerDependencies": {
+    "@angular/common": "^15",
+    "@angular/core": "^15",
+    "@angular/forms": "^15",
+    "@angular/platform-browser": "^15",
+    "@ng-bootstrap/ng-bootstrap": "^14",
+    "rxjs": "^7",
+    "tabby-core": "*",
+    "tabby-settings": "*",
+    "tabby-terminal": "*",
+    "tabby-hive-core": "*"
+  }
+}

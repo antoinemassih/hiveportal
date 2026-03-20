@@ -32,6 +32,10 @@ export const builtinPlugins = [
     'tabby-plugin-manager',
     'tabby-linkifier',
     'tabby-auto-sudo-password',
+    'tabby-hive-core',
+    'tabby-hive-projects',
+    'tabby-hive-tools',
+    'tabby-hive-ai',
 ]
 
 export const packagesWithDocs = [

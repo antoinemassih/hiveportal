@@ -1,0 +1,104 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.hive-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    margin-bottom: 12px;
+
+    h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--theme-fg-more);
+    }
+
+    .search-box input {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+}
+
+.project-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.project-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+
+    &:hover {
+        background-color: var(--theme-bg-more-2);
+    }
+
+    &.active {
+        background-color: var(--theme-bg-more-3);
+        border-left: 3px solid var(--theme-fg-accent);
+    }
+
+    .project-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .project-name {
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .project-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2px;
+
+        .badge {
+            font-size: 10px;
+            padding: 1px 4px;
+        }
+
+        .project-path {
+            font-size: 10px;
+            color: var(--theme-fg-less-2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .project-actions {
+        flex-shrink: 0;
+
+        .btn-link {
+            padding: 2px 4px;
+            opacity: 0.5;
+            &:hover { opacity: 1; }
+        }
+    }
+}
+
+.sidebar-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--theme-bg-more-2);
+}

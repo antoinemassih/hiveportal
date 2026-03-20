@@ -1,0 +1,43 @@
+.hive-sidebar
+    .sidebar-header
+        h3 Projects
+        .search-box
+            input.form-control(
+                type='text',
+                placeholder='Search projects...',
+                [(ngModel)]='searchQuery',
+                (ngModelChange)='filterProjects()'
+            )
+
+    .project-list
+        .project-item(
+            *ngFor='let project of filteredProjects',
+            [class.active]='project.name === activeProject',
+            (click)='openProject(project.name)'
+        )
+            .project-info
+                .project-name {{ project.display_name || project.name }}
+                .project-meta
+                    span.badge(
+                        [class.badge-success]='project.status === "active"',
+                        [class.badge-secondary]='project.status !== "active"'
+                    ) {{ project.status }}
+                    span.project-path(
+                        *ngIf='project.local_path'
+                    ) {{ project.local_path }}
+            .project-actions
+                button.btn.btn-sm.btn-link(
+                    (click)='togglePin(project.name, $event)',
+                    [title]='isPinned(project.name) ? "Unpin" : "Pin"'
+                )
+                    i.fas(
+                        [class.fa-thumbtack]='true',
+                        [class.text-warning]='isPinned(project.name)'
+                    )
+
+    .sidebar-footer
+        button.btn.btn-sm.btn-secondary.w-100(
+            (click)='refreshProjects()'
+        )
+            i.fas.fa-sync-alt.me-1
+            span Refresh

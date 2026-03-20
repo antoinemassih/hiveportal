@@ -1,11 +1,11 @@
 {
-  "name": "tabby",
-  "description": "A terminal for a modern age",
+  "name": "hiveportal",
+  "description": "A terminal workspace for development",
   "private": true,
-  "repository": "https://github.com/Eugeny/tabby",
+  "repository": "https://github.com/antoinemassih/hiveportal",
   "author": {
-    "name": "Tabby Developers",
-    "email": "e@ajenti.org"
+    "name": "Antoine Abdul-Massih",
+    "email": "antoine@xllio.com"
   },
   "main": "dist/main.js",
   "version": "1.0.0-alpha.1",
@@ -60,7 +60,11 @@
     "tabby-serial": "*",
     "tabby-settings": "*",
     "tabby-ssh": "*",
-    "tabby-terminal": "*"
+    "tabby-terminal": "*",
+    "tabby-hive-core": "*",
+    "tabby-hive-projects": "*",
+    "tabby-hive-tools": "*",
+    "tabby-hive-ai": "*"
   },
   "resolutions": {
     "node-abi": "4.9.0",
