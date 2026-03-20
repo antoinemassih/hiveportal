@@ -1,0 +1,12 @@
+{
+  "name": "hiveportal-web-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-pty": "^1.2.0-beta.8",
+    "ws": "^8.14.2"
+  }
+}
