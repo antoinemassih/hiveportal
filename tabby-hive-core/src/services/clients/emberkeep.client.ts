@@ -6,26 +6,18 @@ export interface EmberKeepProject {
     display_name?: string
     description?: string
     status: string
-    local_path?: string
-    github?: string
-    branch?: string
-    namespace?: string
     domain?: string
-    services?: Record<string, string>
     tags?: string[]
+    has_cms?: boolean
     links?: Record<string, string>
-    tools?: { preload?: string[], auto_params?: Record<string, unknown> }
-    cms?: { enabled?: boolean, strapi_url?: string }
-    meta?: Record<string, unknown>
-}
-
-export interface EmberKeepScope {
-    project: string
-    repo?: { path?: string, github?: string }
+    repo?: { local_path?: string, github?: string, branch?: string }
     infra?: { namespace?: string, registry?: string, domain?: string }
     services?: Record<string, unknown>
-    database?: Record<string, unknown>
+    cms?: { enabled?: boolean, strapi_url?: string, admin_url?: string }
+    database?: { host?: string, port?: number, name?: string }
     tools?: { preload?: string[], auto_params?: Record<string, unknown> }
+    stack?: Record<string, unknown>
+    meta?: Record<string, unknown>
 }
 
 @Injectable()
@@ -42,21 +34,15 @@ export class EmberKeepClient {
         if (!res.ok) {
             throw new Error(`EmberKeep: ${res.status} ${res.statusText}`)
         }
-        return res.json()
+        const data = await res.json()
+        // API returns { projects: [...] }
+        return data.projects ?? data
     }
 
     async getProject (name: string): Promise<EmberKeepProject> {
         const res = await fetch(`${this.baseUrl}/projects/${name}`)
         if (!res.ok) {
             throw new Error(`EmberKeep: project ${name} not found`)
-        }
-        return res.json()
-    }
-
-    async getScope (name: string): Promise<EmberKeepScope> {
-        const res = await fetch(`${this.baseUrl}/projects/${name}/scope`)
-        if (!res.ok) {
-            throw new Error(`EmberKeep: scope for ${name} not found`)
         }
         return res.json()
     }

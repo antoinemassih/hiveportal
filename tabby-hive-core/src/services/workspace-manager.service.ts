@@ -77,7 +77,7 @@ export class WorkspaceManagerService {
 
     private createDefaultWorkspace (projectName: string, project: EmberKeepProject): Workspace {
         const now = new Date().toISOString()
-        const cwd = project.local_path || undefined
+        const cwd = project.repo?.local_path || undefined
 
         const defaultTab: WorkspaceTab = {
             id: this.generateId(),
@@ -101,7 +101,7 @@ export class WorkspaceManagerService {
 
     private async restoreLayout (workspace: Workspace, project: EmberKeepProject): Promise<void> {
         for (const tab of workspace.tabs) {
-            const cwd = tab.cwd || project.local_path || undefined
+            const cwd = tab.cwd || project.repo?.local_path || undefined
             const env: Record<string, string> = {
                 ...tab.envOverrides,
                 HIVE_PROJECT: project.name,
