@@ -1,74 +1,102 @@
-.container.mt-3.mb-3
-    .mb-3
-        .tabby-logo
-        h1.tabby-title HivePortal
+.hive-welcome
+    .hive-header
+        h1.hive-title HivePortal
+        .hive-subtitle Your development workspace
+        .hive-actions
+            button.btn.btn-outline-primary.btn-sm((click)='newProject()')
+                i.fas.fa-plus.me-1
+                span New Project
+            button.btn.btn-outline-secondary.btn-sm.ms-2((click)='closeAndDisable()')
+                span Don't show on startup
 
-    .text-center.mb-3(translate) Welcome to HivePortal!
+    .hive-new-project(*ngIf='showNewForm')
+        .card
+            .card-body
+                h5.card-title New Project
+                .form-group.mb-2
+                    label.form-label Name
+                    input.form-control.form-control-sm(
+                        [(ngModel)]='newName',
+                        placeholder='my-project'
+                    )
+                .form-group.mb-2
+                    label.form-label Display Name
+                    input.form-control.form-control-sm(
+                        [(ngModel)]='newDisplayName',
+                        placeholder='My Project'
+                    )
+                .form-group.mb-2
+                    label.form-label Local Folder
+                    .input-group.input-group-sm
+                        input.form-control(
+                            [(ngModel)]='newLocalPath',
+                            placeholder='/Users/you/Documents/my-project'
+                        )
+                        button.btn.btn-outline-secondary(type='button', (click)='browseFolder()')
+                            i.fas.fa-folder-open
+                .form-group.mb-2
+                    label.form-label GitHub (optional)
+                    input.form-control.form-control-sm(
+                        [(ngModel)]='newGithub',
+                        placeholder='username/repo'
+                    )
+                .form-group.mb-2
+                    label.form-label Description
+                    input.form-control.form-control-sm(
+                        [(ngModel)]='newDescription',
+                        placeholder='What this project does'
+                    )
+                .form-group.mb-3
+                    label.form-label Tags (comma separated)
+                    input.form-control.form-control-sm(
+                        [(ngModel)]='newTags',
+                        placeholder='nextjs, python, api'
+                    )
+                .d-flex.gap-2
+                    button.btn.btn-primary.btn-sm((click)='createProject()', [disabled]='!newName')
+                        i.fas.fa-check.me-1
+                        span Create
+                    button.btn.btn-secondary.btn-sm((click)='showNewForm = false')
+                        span Cancel
 
-    .form-line
-        .header
-            .title(translate) Language
-        select.form-control([(ngModel)]='config.store.language', (ngModelChange)='config.save()')
-            option([ngValue]='null', translate) Automatic
-            option(
-                [value]='lang.code',
-                *ngFor='let lang of allLanguages'
-            ) {{lang.name}}
+    .hive-search(*ngIf='!showNewForm')
+        input.form-control(
+            type='text',
+            placeholder='Search projects...',
+            [(ngModel)]='searchQuery',
+            (ngModelChange)='filterProjects()'
+        )
 
-    .form-line
-        .header
-            .title(translate) Switch color scheme
+    .hive-projects(*ngIf='!showNewForm')
+        .hive-project-card(
+            *ngFor='let project of filteredProjects'
+        )
+            .card-header
+                .project-name {{ project.display_name || project.name }}
+                .project-tags
+                    span.badge.bg-secondary.me-1(*ngFor='let tag of (project.tags || []).slice(0, 3)') {{ tag }}
+            .card-desc(*ngIf='project.description') {{ project.description }}
+            .card-meta
+                span.meta-item(*ngIf='project.localDir')
+                    i.fas.fa-folder.me-1
+                    span {{ project.localDir }}
+                span.meta-item(*ngIf='!project.localDir')
+                    i.fas.fa-folder.me-1
+                    span.text-muted no local folder
+                span.meta-item(*ngIf='project.infra?.domain')
+                    i.fas.fa-globe.me-1
+                    span {{ project.infra.domain }}
+            .card-actions
+                button.btn.btn-sm.btn-primary((click)='openTerminal(project)')
+                    i.fas.fa-terminal.me-1
+                    span Terminal
+                button.btn.btn-sm.btn-success.ms-2((click)='openClaude(project)')
+                    i.fas.fa-robot.me-1
+                    span Claude
 
-        .btn-group(role='group')
-            input.btn-check(
-                type='radio',
-                name='colorSchemeMode',
-                [(ngModel)]='config.store.appearance.colorSchemeMode',
-                (ngModelChange)='config.save()',
-                id='colorSchemeModeAuto',
-                [value]='"auto"'
-            )
-            label.btn.btn-secondary(
-                for='colorSchemeModeAuto'
-            )
-                span(translate) From system
-            input.btn-check(
-                type='radio',
-                name='colorSchemeMode',
-                [(ngModel)]='config.store.appearance.colorSchemeMode',
-                (ngModelChange)='config.save()',
-                id='colorSchemeModeDark',
-                [value]='"dark"'
-            )
-            label.btn.btn-secondary(
-                for='colorSchemeModeDark'
-            )
-                span(translate) Always dark
-            input.btn-check(
-                type='radio',
-                name='colorSchemeMode',
-                [(ngModel)]='config.store.appearance.colorSchemeMode',
-                (ngModelChange)='config.save()',
-                id='colorSchemeModeLight',
-                [value]='"light"'
-            )
-            label.btn.btn-secondary(
-                for='colorSchemeModeLight'
-            )
-                span(translate) Always light
+    .hive-loading(*ngIf='loading')
+        .spinner-border.spinner-border-sm.me-2
+        span Loading projects...
 
-    .form-line
-        .header
-            .title(translate) Enable analytics
-            .description(translate) Help track the number of HivePortal installs across the world!
-        toggle([(ngModel)]='config.store.enableAnalytics')
-
-    .form-line
-        .header
-            .title(translate) Enable global hotkey (Ctrl-Space)
-            .description(translate) Toggles the HivePortal window visibility
-        toggle([(ngModel)]='enableGlobalHotkey')
-
-
-    .text-center.mt-5
-        button.btn.btn-primary((click)='closeAndDisable()', translate) Close and never show again
+    .hive-error(*ngIf='error')
+        .alert.alert-warning {{ error }}
