@@ -90,8 +90,11 @@
                 button.btn.btn-sm.btn-primary((click)='openTerminal(project)')
                     i.fas.fa-terminal.me-1
                     span Terminal
-                button.btn.btn-sm.btn-success.ms-2((click)='openClaude(project)')
+                button.btn.btn-sm.btn-success.ms-2((click)='openClaude(project, true)')
                     i.fas.fa-robot.me-1
+                    span Resume
+                button.btn.btn-sm.btn-outline-success.ms-1((click)='openClaude(project, false)')
+                    i.fas.fa-plus.me-1
                     span Claude
 
     .hive-loading(*ngIf='loading')

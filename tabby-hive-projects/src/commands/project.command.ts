@@ -89,10 +89,16 @@ export class ProjectCommand extends HiveSlashCommand {
                     result: 'terminal',
                 },
                 {
-                    name: 'Open Claude',
-                    description: dir ? `claude --dangerously-skip-permissions in ${dir}` : 'no local folder',
+                    name: 'Claude (continue last)',
+                    description: dir ? `resume conversation in ${dir}` : 'no local folder',
                     icon: 'fas fa-robot',
-                    result: 'claude',
+                    result: 'claude-continue',
+                },
+                {
+                    name: 'Claude (new session)',
+                    description: dir ? `fresh session in ${dir}` : 'no local folder',
+                    icon: 'fas fa-plus',
+                    result: 'claude-new',
                 },
                 {
                     name: 'Project Info',
@@ -106,8 +112,10 @@ export class ProjectCommand extends HiveSlashCommand {
 
             if (action === 'terminal') {
                 return this.openTerminal(project)
-            } else if (action === 'claude') {
-                return this.openClaude(project)
+            } else if (action === 'claude-continue') {
+                return this.openClaude(project, true)
+            } else if (action === 'claude-new') {
+                return this.openClaude(project, false)
             } else if (action === 'info') {
                 return this.showInfo(projectName)
             }
@@ -144,7 +152,7 @@ export class ProjectCommand extends HiveSlashCommand {
         return { output: `\x1b[32mOpened terminal in ${dir}\x1b[0m` }
     }
 
-    private openClaude (project: EmberKeepProject): CommandResult {
+    private openClaude (project: EmberKeepProject, resume = false): CommandResult {
         const dir = findProjectDir(project.name, project.repo?.local_path ?? undefined)
         if (!dir) {
             return { output: `\x1b[31mNo local folder found for ${project.name}\x1b[0m` }
@@ -167,7 +175,9 @@ export class ProjectCommand extends HiveSlashCommand {
                     options: {
                         cwd: dir,
                         command: claudeBin,
-                        args: ['--dangerously-skip-permissions'] as string[],
+                        args: resume
+                            ? ['--continue', '--dangerously-skip-permissions'] as string[]
+                            : ['--dangerously-skip-permissions'] as string[],
                         env: {
                             HIVE_PROJECT: project.name,
                             HOME: os.homedir(),

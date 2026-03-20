@@ -164,7 +164,7 @@ export class WelcomeTabComponent extends BaseTabComponent {
         })
     }
 
-    openClaude (project: ProjectCard) {
+    openClaude (project: ProjectCard, resume = false) {
         if (!project.localDir) {
             this.notifications.error(`No local folder found for ${project.name}`)
             return
@@ -186,7 +186,9 @@ export class WelcomeTabComponent extends BaseTabComponent {
                     options: {
                         cwd: project.localDir,
                         command: claudeBin,
-                        args: ['--dangerously-skip-permissions'],
+                        args: resume
+                            ? ['--continue', '--dangerously-skip-permissions']
+                            : ['--dangerously-skip-permissions'],
                         env: {
                             HIVE_PROJECT: project.name,
                             HOME: os.homedir(),
