@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core'
 import { BaseTabComponent } from './baseTab.component'
 import { ConfigService } from '../services/config.service'
 import { AppService } from '../services/app.service'
+import { ProfilesService } from '../services/profiles.service'
 import { NotificationsService } from '../services/notifications.service'
 import * as https from 'https'
 import * as http from 'http'
@@ -66,6 +67,26 @@ function nodeRequest (urlStr: string, method = 'GET', body?: string, headers?: R
     })
 }
 
+function findClaude (): string | null {
+    const home = os.homedir()
+    const candidates = [
+        path.join(home, '.local', 'bin', 'claude'),
+        '/usr/local/bin/claude',
+        '/opt/homebrew/bin/claude',
+    ]
+    try {
+        const nvmDir = path.join(home, '.nvm', 'versions', 'node')
+        const versions = fs.readdirSync(nvmDir)
+        if (versions.length) {
+            candidates.unshift(path.join(nvmDir, versions[versions.length - 1], 'bin', 'claude'))
+        }
+    } catch { /* no nvm */ }
+    for (const c of candidates) {
+        try { if (fs.existsSync(c)) { return c } } catch { /* skip */ }
+    }
+    return null
+}
+
 const EMBERKEEP_URL = 'http://192.168.1.70'
 const EMBERKEEP_HOST = 'emberkeep.xllio.com'
 
@@ -90,11 +111,10 @@ export class WelcomeTabComponent extends BaseTabComponent {
     newDescription = ''
     newTags = ''
 
-    private TerminalTabComponent: any
-
     constructor (
         public config: ConfigService,
         private app: AppService,
+        private profiles: ProfilesService,
         private notifications: NotificationsService,
         translate: TranslateService,
         injector: Injector,
@@ -102,10 +122,6 @@ export class WelcomeTabComponent extends BaseTabComponent {
         super(injector)
         this.setTitle(translate.instant('Welcome'))
         this.loadProjects()
-        // Lazy load TerminalTabComponent to avoid circular deps
-        try {
-            this.TerminalTabComponent = require('tabby-local').TerminalTabComponent
-        } catch { /* will be resolved later */ }
     }
 
     async loadProjects () {
@@ -138,87 +154,74 @@ export class WelcomeTabComponent extends BaseTabComponent {
         )
     }
 
-    openTerminal (project: ProjectCard) {
+    async openTerminal (project: ProjectCard) {
         if (!project.localDir) {
             this.notifications.error(`No local folder found for ${project.name}`)
             return
         }
-        if (!this.TerminalTabComponent) {
-            try { this.TerminalTabComponent = require('tabby-local').TerminalTabComponent } catch { return }
-        }
-        const shell = process.env.SHELL || '/bin/zsh'
-        this.app.openNewTab({
-            type: this.TerminalTabComponent,
-            inputs: {
-                profile: {
-                    id: '', type: 'local',
-                    name: project.display_name || project.name,
-                    options: {
-                        cwd: project.localDir,
-                        command: shell,
-                        args: ['--login'],
-                        env: { HIVE_PROJECT: project.name },
-                    },
+        try {
+            const allProfiles = await this.profiles.getProfiles()
+            const localProfile = allProfiles.find(p => p.type === 'local')
+            if (!localProfile) { return }
+            const provider = this.profiles.providerForProfile(localProfile)
+            if (!provider) { return }
+            const shell = process.env.SHELL || '/bin/zsh'
+            const params = await provider.getNewTabParameters({
+                ...localProfile,
+                name: project.display_name || project.name,
+                options: {
+                    ...localProfile.options,
+                    cwd: project.localDir,
+                    command: shell,
+                    args: ['--login'],
+                    env: { ...localProfile.options?.env, HIVE_PROJECT: project.name },
                 },
-            },
-        })
+            } as any)
+            this.app.openNewTab(params)
+        } catch (e) {
+            this.notifications.error(`Failed to open terminal: ${e}`)
+        }
     }
 
-    openClaude (project: ProjectCard, resume = false) {
+    async openClaude (project: ProjectCard, resume = false) {
         if (!project.localDir) {
             this.notifications.error(`No local folder found for ${project.name}`)
             return
         }
-        if (!this.TerminalTabComponent) {
-            try { this.TerminalTabComponent = require('tabby-local').TerminalTabComponent } catch { return }
-        }
-        const claudeBin = this.findClaude()
+        const claudeBin = findClaude()
         if (!claudeBin) {
             this.notifications.error('Claude CLI not found')
             return
         }
-        this.app.openNewTab({
-            type: this.TerminalTabComponent,
-            inputs: {
-                profile: {
-                    id: '', type: 'local',
-                    name: `Claude (${project.display_name || project.name})`,
-                    options: {
-                        cwd: project.localDir,
-                        command: claudeBin,
-                        args: resume
-                            ? ['--continue', '--dangerously-skip-permissions']
-                            : ['--dangerously-skip-permissions'],
-                        env: {
-                            HIVE_PROJECT: project.name,
-                            HOME: os.homedir(),
-                            PATH: process.env.PATH || '',
-                            TERM: 'xterm-256color',
-                        },
+        try {
+            const allProfiles = await this.profiles.getProfiles()
+            const localProfile = allProfiles.find(p => p.type === 'local')
+            if (!localProfile) { return }
+            const provider = this.profiles.providerForProfile(localProfile)
+            if (!provider) { return }
+            const args = resume
+                ? ['--continue', '--dangerously-skip-permissions']
+                : ['--dangerously-skip-permissions']
+            const params = await provider.getNewTabParameters({
+                ...localProfile,
+                name: `Claude (${project.display_name || project.name})`,
+                options: {
+                    ...localProfile.options,
+                    cwd: project.localDir,
+                    command: claudeBin,
+                    args,
+                    env: {
+                        ...localProfile.options?.env,
+                        HIVE_PROJECT: project.name,
+                        HOME: os.homedir(),
+                        TERM: 'xterm-256color',
                     },
                 },
-            },
-        })
-    }
-
-    private findClaude (): string | null {
-        const home = os.homedir()
-        const candidates = [
-            path.join(home, '.local', 'bin', 'claude'),
-            '/usr/local/bin/claude',
-            '/opt/homebrew/bin/claude',
-        ]
-        try {
-            const nvmDir = path.join(home, '.nvm', 'versions', 'node')
-            const versions = fs.readdirSync(nvmDir)
-            if (versions.length) {
-                candidates.unshift(path.join(nvmDir, versions[versions.length - 1], 'bin', 'claude'))
-            }
-        } catch { /* no nvm */ }
-        for (const c of candidates) {
-            try { if (fs.existsSync(c)) { return c } } catch { /* skip */ }
+            } as any)
+            this.app.openNewTab(params)
+        } catch (e) {
+            this.notifications.error(`Failed to open Claude: ${e}`)
         }
-        return null
     }
 
     newProject () {
@@ -273,11 +276,5 @@ export class WelcomeTabComponent extends BaseTabComponent {
         } catch (e) {
             this.notifications.error(`Failed to create project: ${e}`)
         }
-    }
-
-    async closeAndDisable () {
-        this.config.store.enableWelcomeTab = false
-        await this.config.save()
-        this.destroy()
     }
 }
