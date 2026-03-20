@@ -150,7 +150,12 @@ export class ProjectCommand extends HiveSlashCommand {
             return { output: `\x1b[31mNo local folder found for ${project.name}\x1b[0m` }
         }
 
-        const shell = process.env.SHELL || '/bin/zsh'
+        // Find claude binary — Electron's PATH may not include ~/.local/bin
+        const claudeBin = this.findBinary('claude')
+        if (!claudeBin) {
+            return { output: '\x1b[31mClaude CLI not found. Install with: npm install -g @anthropic-ai/claude-code\x1b[0m' }
+        }
+
         const app = this.injector.get(AppService)
         app.openNewTab({
             type: TerminalTabComponent,
@@ -161,14 +166,46 @@ export class ProjectCommand extends HiveSlashCommand {
                     name: `Claude (${project.display_name || project.name})`,
                     options: {
                         cwd: dir,
-                        command: shell,
-                        args: ['-i', '-l', '-c', 'exec claude --dangerously-skip-permissions'] as string[],
-                        env: { HIVE_PROJECT: project.name },
+                        command: claudeBin,
+                        args: ['--dangerously-skip-permissions'] as string[],
+                        env: {
+                            HIVE_PROJECT: project.name,
+                            HOME: os.homedir(),
+                            PATH: process.env.PATH || '',
+                            TERM: 'xterm-256color',
+                        },
                     },
                 },
             },
         })
         return { output: `\x1b[32mOpened Claude in ${dir}\x1b[0m` }
+    }
+
+    private findBinary (name: string): string | null {
+        const home = os.homedir()
+        const candidates = [
+            path.join(home, '.local', 'bin', name),
+            `/usr/local/bin/${name}`,
+            `/opt/homebrew/bin/${name}`,
+        ]
+        // Check nvm paths
+        const nvmDir = path.join(home, '.nvm', 'versions', 'node')
+        try {
+            const versions = fs.readdirSync(nvmDir)
+            if (versions.length) {
+                candidates.unshift(path.join(nvmDir, versions[versions.length - 1], 'bin', name))
+            }
+        } catch { /* no nvm */ }
+
+        for (const c of candidates) {
+            try { if (fs.existsSync(c)) { return c } } catch { /* skip */ }
+        }
+
+        // Try which via PATH
+        try {
+            const { execSync } = require('child_process')
+            return execSync(`which ${name}`, { encoding: 'utf-8' }).trim() || null
+        } catch { return null }
     }
 
     private async showInfo (projectName: string | null): Promise<CommandResult> {

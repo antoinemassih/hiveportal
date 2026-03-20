@@ -172,7 +172,11 @@ export class WelcomeTabComponent extends BaseTabComponent {
         if (!this.TerminalTabComponent) {
             try { this.TerminalTabComponent = require('tabby-local').TerminalTabComponent } catch { return }
         }
-        const shell = process.env.SHELL || '/bin/zsh'
+        const claudeBin = this.findClaude()
+        if (!claudeBin) {
+            this.notifications.error('Claude CLI not found')
+            return
+        }
         this.app.openNewTab({
             type: this.TerminalTabComponent,
             inputs: {
@@ -181,13 +185,38 @@ export class WelcomeTabComponent extends BaseTabComponent {
                     name: `Claude (${project.display_name || project.name})`,
                     options: {
                         cwd: project.localDir,
-                        command: shell,
-                        args: ['-i', '-l', '-c', 'exec claude --dangerously-skip-permissions'],
-                        env: { HIVE_PROJECT: project.name },
+                        command: claudeBin,
+                        args: ['--dangerously-skip-permissions'],
+                        env: {
+                            HIVE_PROJECT: project.name,
+                            HOME: os.homedir(),
+                            PATH: process.env.PATH || '',
+                            TERM: 'xterm-256color',
+                        },
                     },
                 },
             },
         })
+    }
+
+    private findClaude (): string | null {
+        const home = os.homedir()
+        const candidates = [
+            path.join(home, '.local', 'bin', 'claude'),
+            '/usr/local/bin/claude',
+            '/opt/homebrew/bin/claude',
+        ]
+        try {
+            const nvmDir = path.join(home, '.nvm', 'versions', 'node')
+            const versions = fs.readdirSync(nvmDir)
+            if (versions.length) {
+                candidates.unshift(path.join(nvmDir, versions[versions.length - 1], 'bin', 'claude'))
+            }
+        } catch { /* no nvm */ }
+        for (const c of candidates) {
+            try { if (fs.existsSync(c)) { return c } } catch { /* skip */ }
+        }
+        return null
     }
 
     newProject () {
