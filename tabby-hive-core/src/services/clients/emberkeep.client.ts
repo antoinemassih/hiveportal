@@ -22,21 +22,46 @@ export interface EmberKeepProject {
     meta?: Record<string, unknown>
 }
 
-function request (url: string): Promise<any> {
+function nodeRequest (urlStr: string, method = 'GET', body?: string, extraHeaders?: Record<string, string>): Promise<any> {
     return new Promise((resolve, reject) => {
-        const mod = url.startsWith('https') ? https : http
-        const options = url.startsWith('https') ? { rejectUnauthorized: false } : {}
-        mod.get(url, options, (res) => {
+        const url = new URL(urlStr)
+        const isHttps = url.protocol === 'https:'
+        const mod = isHttps ? https : http
+        const options: any = {
+            hostname: url.hostname,
+            port: url.port || (isHttps ? 443 : 80),
+            path: url.pathname + url.search,
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                ...extraHeaders,
+            },
+            rejectUnauthorized: false,
+            timeout: 10000,
+        }
+        if (body) {
+            options.headers['Content-Length'] = Buffer.byteLength(body)
+        }
+
+        const req = mod.request(options, (res) => {
+            // Follow redirects
+            if (res.statusCode === 301 || res.statusCode === 302) {
+                const location = res.headers.location
+                if (location) {
+                    nodeRequest(location, method, body, extraHeaders).then(resolve).catch(reject)
+                    return
+                }
+            }
             let data = ''
             res.on('data', (chunk) => { data += chunk })
             res.on('end', () => {
-                try {
-                    resolve(JSON.parse(data))
-                } catch {
-                    reject(new Error(`Invalid JSON from ${url}`))
-                }
+                try { resolve(JSON.parse(data)) } catch { reject(new Error(`Invalid JSON from ${urlStr}: ${data.substring(0, 100)}`)) }
             })
-        }).on('error', reject)
+        })
+        req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout: ${urlStr}`)) })
+        req.on('error', reject)
+        if (body) { req.write(body) }
+        req.end()
     })
 }
 
@@ -48,38 +73,21 @@ export class EmberKeepClient {
         return this.hiveConfig.services.emberkeep
     }
 
+    private get hostHeader (): Record<string, string> {
+        return { Host: 'emberkeep.xllio.com' }
+    }
+
     async listProjects (status?: string): Promise<EmberKeepProject[]> {
         const params = status ? `?status=${status}` : ''
-        const data = await request(`${this.baseUrl}/projects${params}`)
+        const data = await nodeRequest(`${this.baseUrl}/projects${params}`, 'GET', undefined, this.hostHeader)
         return data.projects ?? data
     }
 
     async getProject (name: string): Promise<EmberKeepProject> {
-        return request(`${this.baseUrl}/projects/${name}`)
+        return nodeRequest(`${this.baseUrl}/projects/${name}`, 'GET', undefined, this.hostHeader)
     }
 
     async updateProject (name: string, body: Partial<EmberKeepProject>): Promise<EmberKeepProject> {
-        return new Promise((resolve, reject) => {
-            const url = new URL(`${this.baseUrl}/projects/${name}`)
-            const mod = url.protocol === 'https:' ? https : http
-            const payload = JSON.stringify(body)
-            const req = mod.request({
-                hostname: url.hostname,
-                port: url.port,
-                path: url.pathname,
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-                rejectUnauthorized: false,
-            } as any, (res) => {
-                let data = ''
-                res.on('data', (chunk) => { data += chunk })
-                res.on('end', () => {
-                    try { resolve(JSON.parse(data)) } catch { reject(new Error('Invalid JSON')) }
-                })
-            })
-            req.on('error', reject)
-            req.write(payload)
-            req.end()
-        })
+        return nodeRequest(`${this.baseUrl}/projects/${name}`, 'PUT', JSON.stringify(body), this.hostHeader)
     }
 }
