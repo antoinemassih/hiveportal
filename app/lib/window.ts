@@ -349,6 +349,13 @@ export class Window {
             if (!this.closing) {
                 event.preventDefault()
                 this.send('host:window-close-request')
+                // Force close after 3s if renderer doesn't respond
+                setTimeout(() => {
+                    if (!this.closing) {
+                        this.closing = true
+                        this.window.close()
+                    }
+                }, 3000)
                 return
             }
             this.windowConfig.set('windowBoundaries', this.windowBounds)
