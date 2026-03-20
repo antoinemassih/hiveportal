@@ -1,4 +1,4 @@
-import { ConfigProvider } from 'tabby-core'
+import { ConfigProvider, Platform } from 'tabby-core'
 
 /** @hidden */
 export class HiveConfigProvider extends ConfigProvider {
@@ -18,7 +18,26 @@ export class HiveConfigProvider extends ConfigProvider {
             activeProject: '',
             recentProjectsLimit: 20,
         },
+        hotkeys: {
+            'hive-command-palette': [],
+        },
     }
 
-    platformDefaults = {}
+    platformDefaults = {
+        [Platform.macOS]: {
+            hotkeys: {
+                'hive-command-palette': ['⌘-K'],
+            },
+        },
+        [Platform.Windows]: {
+            hotkeys: {
+                'hive-command-palette': ['Ctrl-K'],
+            },
+        },
+        [Platform.Linux]: {
+            hotkeys: {
+                'hive-command-palette': ['Ctrl-K'],
+            },
+        },
+    }
 }

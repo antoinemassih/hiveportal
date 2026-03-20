@@ -1,9 +1,10 @@
-import { NgModule } from '@angular/core'
+import { NgModule, Injector } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 
 import TabbyCorePlugin, { ToolbarButtonProvider } from 'tabby-core'
 import TabbyTerminalModule from 'tabby-terminal'
+import { CommandEngineService } from 'tabby-hive-core'
 
 import { ProjectSidebarComponent } from './components/projectSidebar.component'
 import { ProjectSidebarButtonProvider } from './buttonProvider'
@@ -32,6 +33,19 @@ import { DeployCommand } from './commands/deploy.command'
         ProjectSidebarComponent,
     ],
 })
-export default class HiveProjectsModule { } // eslint-disable-line @typescript-eslint/no-extraneous-class
+export default class HiveProjectsModule {
+    private constructor (private injector: Injector) {
+        setTimeout(() => {
+            try {
+                const engine = this.injector.get(CommandEngineService)
+                engine.register(this.injector.get(ProjectCommand))
+                engine.register(this.injector.get(StatusCommand))
+                engine.register(this.injector.get(DeployCommand))
+            } catch (e) {
+                console.error('HiveProjects command registration error:', e)
+            }
+        }, 3000)
+    }
+}
 
 export { ProjectSidebarComponent }
