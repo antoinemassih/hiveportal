@@ -151,8 +151,6 @@ export class ProjectCommand extends HiveSlashCommand {
         }
 
         const shell = process.env.SHELL || '/bin/zsh'
-        const claudeCmd = 'claude --dangerously-skip-permissions'
-
         const app = this.injector.get(AppService)
         app.openNewTab({
             type: TerminalTabComponent,
@@ -164,7 +162,7 @@ export class ProjectCommand extends HiveSlashCommand {
                     options: {
                         cwd: dir,
                         command: shell,
-                        args: ['-l', '-c', claudeCmd] as string[],
+                        args: ['-i', '-l', '-c', 'exec claude --dangerously-skip-permissions'] as string[],
                         env: { HIVE_PROJECT: project.name },
                     },
                 },
