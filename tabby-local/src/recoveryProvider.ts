@@ -13,10 +13,25 @@ export class RecoveryProvider extends TabRecoveryProvider<TerminalTabComponent> 
     }
 
     async recover (recoveryToken: RecoveryToken): Promise<NewTabParameters<TerminalTabComponent>> {
+        const profile = recoveryToken.profile
+
+        // If this was a Claude tab, add --continue to resume the conversation
+        if (profile?.options) {
+            const cmd = profile.options.command || ''
+            const isClaudeTab = cmd.includes('claude') || (profile.options.args || []).some((a: string) => a === '--dangerously-skip-permissions')
+            if (isClaudeTab) {
+                const args: string[] = profile.options.args || []
+                if (!args.includes('--continue')) {
+                    args.unshift('--continue')
+                    profile.options.args = args
+                }
+            }
+        }
+
         return {
             type: TerminalTabComponent,
             inputs: {
-                profile: this.injector.get(ProfilesService).getConfigProxyForProfile(recoveryToken.profile),
+                profile: this.injector.get(ProfilesService).getConfigProxyForProfile(profile),
                 savedState: recoveryToken.savedState,
             },
         }
