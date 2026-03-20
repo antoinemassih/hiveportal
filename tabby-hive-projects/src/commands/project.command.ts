@@ -150,17 +150,8 @@ export class ProjectCommand extends HiveSlashCommand {
             return { output: `\x1b[31mNo local folder found for ${project.name}\x1b[0m` }
         }
 
-        // Build context prompt for Claude's initial message
-        let contextPrompt = ''
-        try {
-            contextPrompt = this.buildContextPrompt(project)
-        } catch { /* proceed without */ }
-
-        // Use shell to launch claude interactively so the PTY works properly
         const shell = process.env.SHELL || '/bin/zsh'
-        const claudeCmd = contextPrompt
-            ? `claude --dangerously-skip-permissions --initial-prompt ${this.shellEscape(contextPrompt)}`
-            : 'claude --dangerously-skip-permissions'
+        const claudeCmd = 'claude --dangerously-skip-permissions'
 
         const app = this.injector.get(AppService)
         app.openNewTab({
@@ -180,32 +171,6 @@ export class ProjectCommand extends HiveSlashCommand {
             },
         })
         return { output: `\x1b[32mOpened Claude in ${dir}\x1b[0m` }
-    }
-
-    private buildContextPrompt (project: EmberKeepProject): string {
-        const parts: string[] = [
-            `You are working on the ${project.display_name || project.name} project.`,
-        ]
-        if (project.description) {
-            parts.push(project.description)
-        }
-        if (project.infra?.namespace) {
-            parts.push(`K8s namespace: ${project.infra.namespace}`)
-        }
-        if (project.infra?.domain) {
-            parts.push(`Domain: ${project.infra.domain}`)
-        }
-        if (project.database?.name) {
-            parts.push(`Database: PostgreSQL at ${project.database.host}:${project.database.port}/${project.database.name}`)
-        }
-        if (project.tags?.length) {
-            parts.push(`Tags: ${project.tags.join(', ')}`)
-        }
-        return parts.join('. ')
-    }
-
-    private shellEscape (s: string): string {
-        return "'" + s.replace(/'/g, "'\\''") + "'"
     }
 
     private async showInfo (projectName: string | null): Promise<CommandResult> {
