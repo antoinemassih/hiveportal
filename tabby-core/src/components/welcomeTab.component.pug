@@ -6,8 +6,6 @@
             button.btn.btn-outline-primary.btn-sm((click)='newProject()')
                 i.fas.fa-plus.me-1
                 span New Project
-            button.btn.btn-outline-secondary.btn-sm.ms-2((click)='closeAndDisable()')
-                span Don't show on startup
 
     .hive-new-project(*ngIf='showNewForm')
         .card
@@ -95,7 +93,6 @@
                     span Resume
                 button.btn.btn-sm.btn-outline-success.ms-1((click)='openClaude(project, false)')
                     i.fas.fa-plus.me-1
-                    span Claude
 
     .hive-loading(*ngIf='loading')
         .spinner-border.spinner-border-sm.me-2
