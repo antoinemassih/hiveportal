@@ -25,7 +25,7 @@ export class TabRecoveryService {
         }
         window.localStorage.tabsRecovery = JSON.stringify(
             (await Promise.all(
-                tabs.map(async tab => this.getFullRecoveryToken(tab, { includeState: true })),
+                tabs.map(async tab => this.getFullRecoveryToken(tab, { includeState: false })),
             )).filter(token => !!token),
         )
     }
