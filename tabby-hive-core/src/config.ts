@@ -3,7 +3,6 @@ import { ConfigProvider, Platform } from 'tabby-core'
 /** @hidden */
 export class HiveConfigProvider extends ConfigProvider {
     defaults = {
-        recoverTabs: false,
         hive: {
             services: {
                 emberkeep: 'http://192.168.1.70',
