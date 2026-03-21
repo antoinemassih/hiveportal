@@ -68,7 +68,14 @@ const INDEX_HTML = `<!DOCTYPE html>
                 packageModules: pluginModules,
                 bootstrapData: { isMainWindow: true, windowID: 1, isFirstWindow: true },
                 debugMode: false,
-                connector: null,
+                connector: {
+                    getAppVersion: function() { return '1.0.0' },
+                    getConfig: function() { return { version: 8 } },
+                    setConfig: function() {},
+                    loadConfig: function() { return Promise.resolve({ version: 8 }) },
+                    saveConfig: function() { return Promise.resolve() },
+                    getDistUrl: function() { return '/' },
+                },
             });
         } catch(e) {
             document.querySelector('.preload-logo').innerHTML =

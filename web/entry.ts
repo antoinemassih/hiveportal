@@ -1,6 +1,7 @@
 import './polyfills'
 
 import 'zone.js'
+import * as AngularCompiler from '@angular/compiler'
 import 'core-js/proposals/reflect-metadata'
 import 'core-js/features/array/flat'
 import 'rxjs'
@@ -22,6 +23,36 @@ interface BootstrapOptions {
     connector: any
 }
 
+// Register framework modules so plugins can require() them
+import * as ngCore from '@angular/core'
+import * as ngCommon from '@angular/common'
+import * as ngForms from '@angular/forms'
+import * as ngAnimations from '@angular/animations'
+import * as ngPlatformBrowser from '@angular/platform-browser'
+import * as ngBootstrap from '@ng-bootstrap/ng-bootstrap'
+import * as rxjs from 'rxjs'
+import * as rxjsOperators from 'rxjs/operators'
+import * as ngxToastr from 'ngx-toastr'
+
+const frameworkModules = {
+    '@angular/compiler': AngularCompiler,
+    '@angular/core': ngCore,
+    '@angular/common': ngCommon,
+    '@angular/forms': ngForms,
+    '@angular/animations': ngAnimations,
+    '@angular/platform-browser': ngPlatformBrowser,
+    '@ng-bootstrap/ng-bootstrap': ngBootstrap,
+    'rxjs': rxjs,
+    'rxjs/operators': rxjsOperators,
+    'ngx-toastr': ngxToastr,
+}
+// Make these available to both Tabby.registerModule and window.require
+for (const [name, mod] of Object.entries(frameworkModules)) {
+    if (window['Tabby']) {
+        window['Tabby'].registerModule(name, mod)
+    }
+}
+
 window['bootstrapTabby'] = async function bootstrap (options: BootstrapOptions): Promise<NgModuleRef<any>> {
     window.parent.postMessage('request-connector', '*')
 
@@ -35,6 +66,8 @@ window['bootstrapTabby'] = async function bootstrap (options: BootstrapOptions):
         pluginModule.bootstrap = packageModule.bootstrap
         pluginModules.push(pluginModule)
     }
+
+    window['pluginModules'] = options.packageModules
 
     if (!options.debugMode) {
         enableProdMode()
