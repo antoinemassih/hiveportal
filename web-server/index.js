@@ -15,10 +15,7 @@ const WEB_PLUGINS = [
     'tabby-community-color-schemes',
     'tabby-web',
     'tabby-linkifier',
-    'tabby-hive-core',
-    'tabby-hive-projects',
-    'tabby-hive-tools',
-    'tabby-hive-ai',
+    'tabby-web-demo',
 ]
 
 const MIMES = {
@@ -51,8 +48,17 @@ const INDEX_HTML = `<!DOCTYPE html>
     </app-root>
     <script src="/bundle.js"></script>
     <script>
+    function waitForBootstrap() {
+        return new Promise(function(resolve) {
+            if (window.bootstrapTabby) { resolve(); return; }
+            var check = setInterval(function() {
+                if (window.bootstrapTabby) { clearInterval(check); resolve(); }
+            }, 50);
+        });
+    }
     (async function() {
         try {
+            await waitForBootstrap();
             var bar = document.getElementById('progress-bar');
             var pluginModules = await Tabby.loadPlugins(
                 ${JSON.stringify(pluginUrls)},
